@@ -487,4 +487,64 @@
   </main>
 </body>
 </html>
+<!-- Ethers v6 UMD build -->
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const RPC_URL = 'https://testnet-rpc.monad.xyz';
+  const CONTRACT_ADDRESS = '0x86942Cf234Ba763B3C95CAe7F63dcf17Abc56aDd';
+
+  const ABI = [
+    "function balanceOf(address owner) view returns (uint256)"
+  ];
+
+  const provider = new ethers.JsonRpcProvider(RPC_URL);
+  const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
+
+  const input = document.getElementById("walletInput");
+  const button = document.getElementById("checkBtn");
+  const status = document.getElementById("statusMessage");
+
+  async function checkAddress() {
+    const addr = input.value.trim();
+
+    status.textContent = "";
+    status.className = "status";
+
+    if (!addr) {
+      status.textContent = "Enter a wallet address.";
+      status.classList.add("status-error");
+      return;
+    }
+
+    try {
+      const normalized = ethers.getAddress(addr);
+
+      status.textContent = "Checking shadows...";
+      status.classList.add("status-info");
+
+      const balance = await contract.balanceOf(normalized);
+
+      if (balance > 0n) {
+        status.textContent = "Guaranteed WL — Erebus: ID Pass detected.";
+        status.classList.add("status-success");
+      } else {
+        status.textContent = "Not eligible — no ID Pass found.";
+        status.classList.add("status-error");
+      }
+    } catch (err) {
+      console.error("Contract error:", err);
+      status.textContent = "Error reading contract.";
+      status.classList.add("status-error");
+    }
+  }
+
+  button.addEventListener("click", checkAddress);
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter") checkAddress();
+  });
+});
+</script>
+
 
