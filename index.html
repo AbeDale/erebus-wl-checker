@@ -1,16 +1,69 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Erebus WL Checker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    /* ---------- RESET ---------- */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+<!-- Ethers v6 UMD build -->
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const RPC_URL = 'https://testnet-rpc.monad.xyz';   // Monad public testnet RPC
+    const CONTRACT_ADDRESS = '0x86942Cf234Ba763B3C95CAe7F63dcf17Abc56aDd'; // Erebus: ID Pass
+
+    // Minimal ERC-721 ABI: only what we need
+    const ABI = [
+      'function balanceOf(address owner) view returns (uint256)'
+    ];
+
+    const provider = new ethers.JsonRpcProvider(RPC_URL);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
+
+    const input = document.getElementById('walletInput');
+    const button = document.getElementById('checkBtn');
+    const status = document.getElementById('statusMessage');
+
+    async function checkAddress() {
+      const addr = (input.value || '').trim();
+
+      status.textContent = '';
+      status.className = 'status';
+
+      if (!addr) {
+        status.textContent = 'Enter a wallet address.';
+        status.classList.add('status-error');
+        return;
+      }
+
+      try {
+        // basic address sanity check
+        const normalized = ethers.getAddress(addr);
+
+        status.textContent = 'Checking shadows...';
+        status.classList.add('status-info');
+
+        const balance = await contract.balanceOf(normalized);
+
+        if (balance > 0n) {
+          status.textContent = 'Guaranteed WL – Erebus: ID Pass detected.';
+          status.classList.remove('status-error', 'status-info');
+          status.classList.add('status-success');
+        } else {
+          status.textContent = 'Not eligible – no Erebus: ID Pass found on Monad testnet.';
+          status.classList.remove('status-success', 'status-info');
+          status.classList.add('status-error');
+        }
+      } catch (err) {
+        console.error('Error calling contract:', err);
+        status.textContent = 'Error reading contract. Check RPC / network / address.';
+        status.classList.remove('status-success', 'status-info');
+        status.classList.add('status-error');
+      }
     }
+
+    button.addEventListener('click', checkAddress);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') checkAddress();
+    });
+  });
+</script>
+
 
     html, body {
       height: 100%;
@@ -434,3 +487,4 @@
   </main>
 </body>
 </html>
+
