@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Erebus WL Checker</title>
+  <style>
+    body {
+      background: #0a0a0f;
+      font-family: Arial, sans-serif;
+      color: white;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      color: #b090ff;
+      text-shadow: 0 0 10px #6a40ff;
+    }
+    .box {
+      background: #11111a;
+      padding: 25px;
+      border-radius: 12px;
+      width: 400px;
+      margin: auto;
+      box-shadow: 0 0 25px #3b2b66;
+    }
+    input {
+      width: 90%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      margin-top: 15px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 8px;
+      background: #6a40ff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 12px #6a40ff;
+    }
+    #result {
+      margin-top: 25px;
+      font-size: 1.3rem;
+      font-weight: bold;
+    }
+  </style>
+
+  <!-- Ethers.js v6 import -->
+  <script type="module">
+    import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.min.js";
+
+    const CONTRACT = "0x86942Cf234Ba763B3C95CAe7F63dcf17Abc56aDd";
+    const ABI = [
+      "function balanceOf(address owner) view returns (uint256)"
+    ];
+
+    window.check = async function() {
+      const addr = document.getElementById("wallet").value.trim();
+      const resultBox = document.getElementById("result");
+
+      if (!ethers.isAddress(addr)) {
+        resultBox.style.color = "red";
+        resultBox.textContent = "Invalid address.";
+        return;
+      }
+
+      try {
+        const provider = new ethers.JsonRpcProvider("https://rpc.monad-testnet.gelato.digital");
+        const contract = new ethers.Contract(CONTRACT, ABI, provider);
+
+        const balance = await contract.balanceOf(addr);
+
+        if (balance > 0n) {
+          resultBox.style.color = "#7aff9a";
+          resultBox.innerHTML = "✔ GUARANTEED WL";
+        } else {
+          resultBox.style.color = "#ff6b6b";
+          resultBox.innerHTML = "✖ Not Eligible";
+        }
+      } catch (err) {
+        resultBox.style.color = "red";
+        resultBox.textContent = "Error reading contract.";
+        console.error(err);
+      }
+    };
+  </script>
+
+</head>
+<body>
+  <h1>Erebus WL Checker</h1>
+  <div class="box">
+    <p>Enter your wallet address to check WL status</p>
+    <input id="wallet" placeholder="0x..." />
+    <button onclick="check()">Check</button>
+    <div id="result"></div>
+  </div>
+</body>
+</html>
