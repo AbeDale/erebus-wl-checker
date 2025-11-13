@@ -1,69 +1,20 @@
 <!DOCTYPE html>
-<!-- Ethers v6 UMD build -->
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Erebus WL Checker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const RPC_URL = 'https://testnet-rpc.monad.xyz';   // Monad public testnet RPC
-    const CONTRACT_ADDRESS = '0x86942Cf234Ba763B3C95CAe7F63dcf17Abc56aDd'; // Erebus: ID Pass
+  <!-- Ethers v6 UMD build (global `ethers`) -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
 
-    // Minimal ERC-721 ABI: only what we need
-    const ABI = [
-      'function balanceOf(address owner) view returns (uint256)'
-    ];
-
-    const provider = new ethers.JsonRpcProvider(RPC_URL);
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
-
-    const input = document.getElementById('walletInput');
-    const button = document.getElementById('checkBtn');
-    const status = document.getElementById('statusMessage');
-
-    async function checkAddress() {
-      const addr = (input.value || '').trim();
-
-      status.textContent = '';
-      status.className = 'status';
-
-      if (!addr) {
-        status.textContent = 'Enter a wallet address.';
-        status.classList.add('status-error');
-        return;
-      }
-
-      try {
-        // basic address sanity check
-        const normalized = ethers.getAddress(addr);
-
-        status.textContent = 'Checking shadows...';
-        status.classList.add('status-info');
-
-        const balance = await contract.balanceOf(normalized);
-
-        if (balance > 0n) {
-          status.textContent = 'Guaranteed WL – Erebus: ID Pass detected.';
-          status.classList.remove('status-error', 'status-info');
-          status.classList.add('status-success');
-        } else {
-          status.textContent = 'Not eligible – no Erebus: ID Pass found on Monad testnet.';
-          status.classList.remove('status-success', 'status-info');
-          status.classList.add('status-error');
-        }
-      } catch (err) {
-        console.error('Error calling contract:', err);
-        status.textContent = 'Error reading contract. Check RPC / network / address.';
-        status.classList.remove('status-success', 'status-info');
-        status.classList.add('status-error');
-      }
+  <style>
+    /* ---------- RESET ---------- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
-
-    button.addEventListener('click', checkAddress);
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') checkAddress();
-    });
-  });
-</script>
-
 
     html, body {
       height: 100%;
@@ -74,7 +25,7 @@
         "Segoe UI", sans-serif;
       color: #f7f3ff;
       overflow: hidden;
-      background: #050008;
+      background: #050009;
     }
 
     /* ---------- ANIMATED BACKGROUND ---------- */
@@ -83,24 +34,18 @@
       inset: 0;
       background:
         radial-gradient(circle at 10% 10%, rgba(180, 82, 255, 0.3) 0, transparent 50%),
-        radial-gradient(circle at 85% 80%, rgba(0, 215, 255, 0.35) 0, transparent 55%),
-        radial-gradient(circle at 50% 50%, #050008 0, #030008 55%, #010004 100%);
+        radial-gradient(circle at 85% 90%, rgba(0, 215, 255, 0.35) 0, transparent 55%),
+        radial-gradient(circle at 50% 50%, #050008 0, #300008 35%, #010004 100%);
       animation: bgPulse 12s ease-in-out infinite alternate;
       z-index: -3;
     }
 
     @keyframes bgPulse {
-      0% {
-        filter: blur(0px) brightness(1);
-        transform: scale(1);
-      }
-      100% {
-        filter: blur(1px) brightness(1.1);
-        transform: scale(1.03);
-      }
+      0%   { filter: blur(0px) brightness(1); transform: scale(1.03); }
+      100% { filter: blur(1px) brightness(1.1); transform: scale(1.05); }
     }
 
-    /* Glowing “mist” ring around the card */
+    /* floating “mist” ring around the card */
     .glow-orbit {
       position: fixed;
       inset: 0;
@@ -113,17 +58,12 @@
       filter: blur(8px);
       animation: orbitGlow 10s ease-in-out infinite alternate;
       z-index: -2;
+      pointer-events: none;
     }
 
     @keyframes orbitGlow {
-      0% {
-        transform: translateY(5px) scale(0.95);
-        opacity: 0.7;
-      }
-      100% {
-        transform: translateY(-10px) scale(1.05);
-        opacity: 1;
-      }
+      0%   { transform: translateY(0px) scale(0.95); opacity: 0.7; }
+      100% { transform: translateY(10px) scale(1.05); opacity: 1; }
     }
 
     /* ---------- LAYOUT ---------- */
@@ -141,7 +81,7 @@
       max-width: 960px;
       width: 100%;
       display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr);
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
       gap: 40px;
       align-items: center;
     }
@@ -149,6 +89,12 @@
     @media (max-width: 860px) {
       .erebus-wrapper {
         grid-template-columns: minmax(0, 1fr);
+        gap: 24px;
+      }
+
+      .shadow-panel {
+        order: -1;
+        margin-bottom: 14px;
       }
     }
 
@@ -157,46 +103,55 @@
       display: flex;
       align-items: center;
       gap: 14px;
-      margin-bottom: 20px;
+      margin-bottom: 1rem;
     }
 
-    .title-row img.logo {
+    .title-row img {
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      box-shadow: 0 0 24px rgba(190, 120, 255, 0.8);
+      box-shadow: 0 0 24px rgba(210, 120, 255, 0.9);
+      object-fit: contain;
     }
 
-    .title-main {
-      font-size: 1.8rem;
-      font-weight: 700;
+    .title-text h1 {
+      font-size: 2.1rem;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       text-shadow:
-        0 0 12px rgba(191, 130, 255, 0.9),
-        0 0 26px rgba(0, 215, 255, 0.7);
+        0 0 12px rgba(191, 140, 255, 0.8),
+        0 0 20px rgba(191, 140, 255, 0.5);
     }
 
-    .title-sub {
+    .title-text p {
+      font-size: 0.82rem;
       opacity: 0.75;
-      font-size: 0.9rem;
-      margin-bottom: 8px;
+      margin-top: 2px;
     }
 
-    .title-meta {
-      font-size: 0.8rem;
-      color: rgba(215, 205, 255, 0.8);
+    .subtitle {
+      font-size: 0.78rem;
+      color: rgba(209, 205, 255, 0.9);
+      opacity: 0.8;
+    }
+
+    .subtitle span {
+      color: #e7b5ff;
+      font-weight: 500;
     }
 
     /* ---------- CARD ---------- */
     .card {
       position: relative;
+      z-index: 2;
       padding: 28px 26px 26px;
       border-radius: 24px;
-      background: radial-gradient(circle at top, #1a1028, #07020f 55%);
+      background: radial-gradient(circle at top, #141028, #07020f 55%);
       box-shadow:
-        0 0 0 1px rgba(164, 112, 255, 0.25),
-        0 18px 60px rgba(0, 0, 0, 0.9);
+        0 40px 90px rgba(0, 0, 0, 0.9),
+        0 0 35px rgba(145, 120, 255, 0.6);
+      border: 1px solid rgba(199, 146, 255, 0.45);
+      overflow: hidden;
     }
 
     .card::before {
@@ -205,16 +160,22 @@
       inset: -2px;
       border-radius: inherit;
       background:
-        linear-gradient(120deg, rgba(173, 113, 255, 0.6), rgba(0, 209, 255, 0.75));
-      opacity: 0.4;
-      filter: blur(12px);
+        linear-gradient(120deg, rgba(173, 113, 255, 0.1), rgba(0, 209, 255, 0.1));
+      opacity: 0;
+      filter: blur(10px);
       z-index: -1;
+      transition: opacity 0.5s ease;
     }
 
+    .card:hover::before {
+      opacity: 0.7;
+    }
+
+    /* ---------- FORM ---------- */
     .field-label {
-      font-size: 0.9rem;
-      margin-bottom: 8px;
-      opacity: 0.86;
+      font-size: 0.8rem;
+      margin-bottom: 6px;
+      opacity: 0.78;
     }
 
     .input-row {
@@ -223,29 +184,29 @@
       margin-bottom: 14px;
     }
 
-    input[type="text"] {
+    .input-row input[type="text"] {
       flex: 1;
       padding: 10px 12px;
       border-radius: 999px;
-      border: 1px solid rgba(214, 176, 255, 0.4);
-      background: rgba(5, 0, 15, 0.95);
-      color: #f7f3ff;
+      border: 1px solid rgba(145, 120, 255, 0.8);
+      background: radial-gradient(circle at top left, #17132f, #090212);
+      color: rgba(210, 205, 255, 0.96);
       font-size: 0.9rem;
+      box-shadow: 0 0 0 1px rgba(224, 175, 255, 0.3);
       outline: none;
-      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8);
-      transition: border 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      transition: box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
     }
 
-    input[type="text"]::placeholder {
+    .input-row input[type="text"]::placeholder {
       color: rgba(200, 175, 255, 0.6);
     }
 
-    input[type="text"]:focus {
-      border-color: rgba(107, 214, 255, 0.75);
+    .input-row input[type="text"]:focus {
+      border-color: rgba(255, 184, 255, 0.8);
       box-shadow:
-        0 0 0 1px rgba(107, 214, 255, 0.5),
-        0 0 24px rgba(107, 214, 255, 0.45);
-      background: rgba(6, 1, 22, 0.98);
+        0 0 0 1px rgba(251, 223, 255, 0.75),
+        0 0 24px rgba(193, 135, 255, 0.7);
+      background: radial-gradient(circle at top left, #19153d, #0d0318);
     }
 
     button {
@@ -257,54 +218,82 @@
       font-weight: 600;
       letter-spacing: 0.04em;
       text-transform: uppercase;
-      color: #08010f;
-      background: linear-gradient(135deg, #f9f2ff, #c88cff);
+      color: #170417;
+      background: radial-gradient(circle at 20% 0%, #fef2ff, #e694ff 35%, #f3b8ff 80%);
       box-shadow:
-        0 0 18px rgba(187, 115, 255, 0.8),
-        0 12px 28px rgba(0, 0, 0, 0.7);
+        0 14px 30px rgba(0, 0, 0, 0.9),
+        0 0 28px rgba(232, 183, 255, 0.95);
       transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
       white-space: nowrap;
+      position: relative;
+      overflow: hidden;
+    }
+
+    button span {
+      position: relative;
+      z-index: 1;
+    }
+
+    button::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(circle at 10% 0%, rgba(255, 255, 255, 0.7), transparent 55%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
     }
 
     button:hover {
-      transform: translateY(-1px) scale(1.02);
-      filter: brightness(1.05);
+      transform: translateY(-1px) scale(0.99);
       box-shadow:
-        0 0 24px rgba(187, 115, 255, 0.9),
-        0 14px 40px rgba(0, 0, 0, 0.8);
+        0 9px 22px rgba(0, 0, 0, 0.75),
+        0 0 40px rgba(242, 206, 255, 0.95);
+      filter: drop-shadow(0 0 16px rgba(250, 225, 255, 0.7));
+    }
+
+    button:hover::before {
+      opacity: 1;
     }
 
     button:active {
       transform: translateY(1px) scale(0.98);
-      box-shadow:
-        0 0 12px rgba(187, 115, 255, 0.7),
-        0 8px 22px rgba(0, 0, 0, 0.8);
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.8);
     }
 
+    /* ---------- STATUS ---------- */
     .status {
       min-height: 26px;
       font-size: 0.9rem;
       margin-top: 6px;
+      opacity: 0.82;
     }
 
     .status.ok {
-      color: #71ffcd;
-      text-shadow: 0 0 12px rgba(113, 255, 205, 0.6);
+      color: #77f88b;
+      text-shadow: 0 0 10px rgba(119, 248, 139, 0.9);
     }
 
-    .status.bad {
-      color: #ff7878;
-      text-shadow: 0 0 10px rgba(255, 100, 140, 0.6);
+    .status.error {
+      color: #ff7b6d;
+      text-shadow: 0 0 10px rgba(255, 123, 109, 0.9);
     }
 
     .status.info {
-      color: rgba(219, 205, 255, 0.85);
+      color: #71f1ff;
+      text-shadow: 0 0 8px rgba(113, 241, 255, 0.7);
     }
 
-    .helper {
-      margin-top: 10px;
-      font-size: 0.78rem;
-      color: rgba(209, 195, 255, 0.7);
+    /* ---------- FOOTER LINE ---------- */
+    .hint {
+      margin-top: 14px;
+      font-size: 0.75rem;
+      opacity: 0.7;
+      line-height: 1.4;
+    }
+
+    .hint span {
+      color: #ffd699;
     }
 
     /* ---------- EREBUS SHADOW SIDE ---------- */
@@ -316,235 +305,214 @@
       pointer-events: none;
     }
 
-    .shadow-panel img {
+    .shadow-panel-inner {
+      position: relative;
       max-width: 280px;
       width: 100%;
-      filter:
-        drop-shadow(0 0 40px rgba(175, 120, 255, 0.9))
-        drop-shadow(0 0 16px rgba(0, 246, 255, 0.8));
-      opacity: 0.85;
+      filter: drop-shadow(0 40px 80px rgba(0, 0, 0, 0.9))
+        drop-shadow(0 0 40px rgba(174, 72, 255, 0.9));
+      transform: translateY(4px);
+      animation: shadowFloat 6.5s ease-in-out infinite alternate;
+    }
+
+    .shadow-panel-inner img {
+      width: 100%;
+      display: block;
+      border-radius: 32px;
+      border: 1px solid rgba(191, 155, 255, 0.7);
+      background: radial-gradient(circle at 35% 0%, #ff42f0 0, transparent 55%), #05000a;
+      object-fit: cover;
+    }
+
+    @keyframes shadowFloat {
+      0% {
+        transform: translateY(0px) scale(1.02) rotate(-0.5deg);
+        filter: blur(0px) opacity(0.9);
+      }
+      100% {
+        transform: translateY(-9px) scale(1.03) rotate(0.4deg);
+        filter: blur(0px) opacity(1);
+      }
+    }
+
+    /* glowing totem behind Erebus */
+    .shadow-glow {
+      position: absolute;
+      inset: 10% -18%;
+      background:
+        radial-gradient(ellipse at center, rgba(0, 210, 255, 0.4) 0, rgba(0, 0, 0, 0.75) 70%);
+      border-radius: 999px;
+      opacity: 0.7;
+      filter: blur(10px);
+      z-index: -1;
       animation: erebusFloat 6.5s ease-in-out infinite alternate;
     }
 
     @keyframes erebusFloat {
       0% {
-        transform: translateY(8px) scale(0.97) rotate(-1deg);
-      }
-      100% {
-        transform: translateY(-8px) scale(1.02) rotate(1deg);
-      }
-    }
-
-    /* faint floor shadow */
-    .shadow-panel::after {
-      content: "";
-      position: absolute;
-      bottom: 16px;
-      width: 60%;
-      height: 28px;
-      border-radius: 50%;
-      background: radial-gradient(
-        ellipse at center,
-        rgba(0, 0, 0, 0.75) 0,
-        transparent 70%
-      );
-      filter: blur(10px);
-      opacity: 0.9;
-      transform: translateY(4px);
-      animation: shadowPulse 6.5s ease-in-out infinite alternate;
-    }
-
-    @keyframes shadowPulse {
-      0% {
-        transform: translateY(6px) scaleX(0.9);
+        transform: translateY(5px) scale(0.97);
+        filter: blur(0px);
         opacity: 0.7;
       }
       100% {
-        transform: translateY(2px) scaleX(1.05);
+        transform: translateY(-6px) scale(1);
+        filter: blur(0px);
         opacity: 1;
       }
     }
 
-    @media (max-width: 860px) {
-      .shadow-panel {
-        order: -1;
-        margin-bottom: 14px;
+    /* floating logo on the left behind the card */
+    .shadow-panel-crest {
+      position: absolute;
+      left: -120px;
+      bottom: 16px;
+      width: 160px;
+      height: 160px;
+      background:
+        radial-gradient(circle at 30% 0%, rgba(255, 255, 255, 0.35), transparent 55%),
+        url("./erebus-logo.png") center/contain no-repeat;
+      opacity: 0.12;
+      filter: blur(1px);
+      animation: crestGlow 12s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+
+    @keyframes crestGlow {
+      0% { transform: translateY(0px) scale(0.98); opacity: 0.08; }
+      100% { transform: translateY(-10px) scale(1.02); opacity: 0.18; }
+    }
+
+    /* ---------- RESPONSIVE ---------- */
+    @media (max-width: 600px) {
+      .card {
+        padding: 22px 18px 18px;
       }
-      .shadow-panel img {
-        max-width: 210px;
+
+      .title-text h1 {
+        font-size: 1.7rem;
+      }
+
+      .shadow-panel-crest {
+        display: none;
+      }
+
+      .page {
+        padding: 16px;
       }
     }
   </style>
-
-  <!-- Ethers v6 CDN -->
-  <script type="module">
-    import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.min.js";
-
-    const CONTRACT_ADDRESS = "0x86942Cf234Ba763B3C95CAe7F63dcf17Abc56aDd";
-
-    // Minimal ERC-721 balanceOf ABI
-    const ABI = [
-      "function balanceOf(address owner) view returns (uint256)"
-    ];
-
-    async function checkWL() {
-      const statusEl = document.getElementById("status");
-      const input = document.getElementById("address");
-      const raw = input.value.trim();
-
-      if (!raw) {
-        statusEl.textContent = "Enter a wallet address.";
-        statusEl.className = "status info";
-        return;
-      }
-
-      try {
-        // Basic address sanity check
-        const addr = ethers.getAddress(raw);
-
-        statusEl.textContent = "Reading contract...";
-        statusEl.className = "status info";
-
-        // Monad testnet RPC – replace with the official one you prefer
-        const provider = new ethers.JsonRpcProvider(
-          "https://rpc.monad-testnet.gelato.digital"
-        );
-
-        const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
-        const balance = await contract.balanceOf(addr);
-
-        if (balance > 0n) {
-          statusEl.textContent = "Guaranteed WL – shadows recognize you.";
-          statusEl.className = "status ok";
-        } else {
-          statusEl.textContent = "Not eligible – this address does not hold an Erebus: ID Pass.";
-          statusEl.className = "status bad";
-        }
-      } catch (err) {
-        console.error(err);
-        statusEl.textContent = "Error reading contract.";
-        statusEl.className = "status bad";
-      }
-    }
-
-    window.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("checkBtn").addEventListener("click", checkWL);
-      document
-        .getElementById("address")
-        .addEventListener("keydown", (e) => {
-          if (e.key === "Enter") checkWL();
-        });
-    });
-  </script>
 </head>
 
 <body>
   <div class="erebus-bg"></div>
   <div class="glow-orbit"></div>
 
-  <main class="page">
+  <div class="page">
     <div class="erebus-wrapper">
-      <!-- Left: Card & text -->
-      <section>
-        <header class="title-row">
-          <img src="erebus-logo.png" alt="Erebus logo" class="logo" />
-          <div>
-            <div class="title-main">Erebus WL Checker</div>
-            <div class="title-sub">Verify if your address carries an Erebus: ID Pass on Monad testnet.</div>
-            <div class="title-meta">The shadows don’t lie.</div>
-          </div>
-        </header>
+      <!-- LEFT: card -->
+      <div class="card">
+        <div class="shadow-panel-crest"></div>
 
-        <div class="card">
-          <div class="field-label">Wallet address</div>
+        <div class="title-row">
+          <img src="./erebus-logo.png" alt="Erebus crest" />
+          <div class="title-text">
+            <h1>EREBUS WL CHECKER</h1>
+            <p>Verify if your address carries an Erebus: ID Pass on Monad testnet.</p>
+          </div>
+        </div>
+
+        <p class="subtitle">
+          The shadows don’t lie.  
+          <span>Check any EVM address.</span>
+        </p>
+
+        <div style="margin-top: 18px;">
+          <label for="wallet" class="field-label">Wallet address</label>
           <div class="input-row">
             <input
-              id="address"
+              id="wallet"
               type="text"
               placeholder="0x…"
               autocomplete="off"
-              spellcheck="false"
             />
-            <button id="checkBtn">Check</button>
+            <button id="checkBtn"><span>Check</span></button>
           </div>
-
-          <div id="status" class="status info">
-            Enter your wallet to see if the shadows marked you.
-          </div>
-
-          <p class="helper">
-            Check any EVM address. If it holds at least one <strong>Erebus: ID Pass</strong> on Monad testnet,
+          <div id="status" class="status info"></div>
+          <p class="hint">
+            Holds at least one <span>Erebus: ID Pass</span> on Monad testnet =
             you’re guaranteed WL for the main collection.
           </p>
         </div>
-      </section>
+      </div>
 
-      <!-- Right: Erebus shadow art -->
-      <aside class="shadow-panel">
-        <img src="erebus-shadow.png" alt="Erebus shadow" />
-      </aside>
+      <!-- RIGHT: Erebus art -->
+      <div class="shadow-panel">
+        <div class="shadow-panel-inner">
+          <div class="shadow-glow"></div>
+          <!-- use any Erebus creature art you like here -->
+          <img src="./erebus-shadow.png" alt="Erebus creature in the dark" />
+        </div>
+      </div>
     </div>
-  </main>
+  </div>
+
+  <script>
+    // ------- CONFIG -------
+    const CONTRACT_ADDRESS = "0x86942Cf234Ba763B3C95CAe7F63dcf17Abc56aDd";
+    const MONAD_RPC = "https://testnet-rpc.monad.xyz";
+
+    const abi = [
+      "function balanceOf(address owner) view returns (uint256)"
+    ];
+
+    const provider = new ethers.JsonRpcProvider(MONAD_RPC);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, abi, provider);
+
+    const walletInput = document.getElementById("wallet");
+    const statusEl = document.getElementById("status");
+    const checkBtn = document.getElementById("checkBtn");
+
+    function setStatus(message, type = "info") {
+      statusEl.textContent = message;
+      statusEl.className = "status " + type;
+    }
+
+    async function checkAddress() {
+      const addr = walletInput.value.trim();
+
+      if (!addr) {
+        setStatus("Enter a wallet address.", "error");
+        return;
+      }
+
+      if (!ethers.isAddress(addr)) {
+        setStatus("That doesn’t look like a valid EVM address.", "error");
+        return;
+      }
+
+      setStatus("Peering into the shadows…", "info");
+
+      try {
+        const balance = await contract.balanceOf(addr);
+        if (balance > 0n) {
+          setStatus("Shadow found. This address holds an Erebus: ID Pass — guaranteed WL.", "ok");
+        } else {
+          setStatus("No Erebus: ID Pass detected for this address.", "error");
+        }
+      } catch (err) {
+        console.error(err);
+        setStatus("Error reading contract. The shadows are noisy — try again in a moment.", "error");
+      }
+    }
+
+    checkBtn.addEventListener("click", checkAddress);
+    walletInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") checkAddress();
+    });
+
+    // default demo address (optional – remove if you don’t want it prefilled)
+    walletInput.value = "";
+    setStatus("Paste any EVM address to check.", "info");
+  </script>
 </body>
 </html>
-<!-- Ethers v6 UMD build -->
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const RPC_URL = 'https://testnet-rpc.monad.xyz';
-  const CONTRACT_ADDRESS = '0x86942Cf234Ba763B3C95CAe7F63dcf17Abc56aDd';
-
-  const ABI = [
-    "function balanceOf(address owner) view returns (uint256)"
-  ];
-
-  const provider = new ethers.JsonRpcProvider(RPC_URL);
-  const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
-
-  const input = document.getElementById("walletInput");
-  const button = document.getElementById("checkBtn");
-  const status = document.getElementById("statusMessage");
-
-  async function checkAddress() {
-    const addr = input.value.trim();
-
-    status.textContent = "";
-    status.className = "status";
-
-    if (!addr) {
-      status.textContent = "Enter a wallet address.";
-      status.classList.add("status-error");
-      return;
-    }
-
-    try {
-      const normalized = ethers.getAddress(addr);
-
-      status.textContent = "Checking shadows...";
-      status.classList.add("status-info");
-
-      const balance = await contract.balanceOf(normalized);
-
-      if (balance > 0n) {
-        status.textContent = "Guaranteed WL — Erebus: ID Pass detected.";
-        status.classList.add("status-success");
-      } else {
-        status.textContent = "Not eligible — no ID Pass found.";
-        status.classList.add("status-error");
-      }
-    } catch (err) {
-      console.error("Contract error:", err);
-      status.textContent = "Error reading contract.";
-      status.classList.add("status-error");
-    }
-  }
-
-  button.addEventListener("click", checkAddress);
-  input.addEventListener("keydown", e => {
-    if (e.key === "Enter") checkAddress();
-  });
-});
-</script>
-
-
